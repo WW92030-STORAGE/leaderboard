@@ -42,6 +42,8 @@ def debug_display(tick_data, target_cam, out, steer, throttle, brake, desired_sp
 
     cv2.imshow('map', cv2.cvtColor(np.array(_combined), cv2.COLOR_BGR2RGB))
     cv2.waitKey(1)
+    
+    print("DEBUG DISPLAY")
 
 
 class ImageAgent(BaseAgent):
@@ -52,12 +54,16 @@ class ImageAgent(BaseAgent):
         self.net = ImageModel.load_from_checkpoint(path_to_conf_file)
         self.net.cuda()
         self.net.eval()
+        
+        PRINT("IMAGE AGENT SETUP")
 
     def _init(self):
         super()._init()
 
         self._turn_controller = PIDController(K_P=1.25, K_I=0.75, K_D=0.3, n=40)
         self._speed_controller = PIDController(K_P=5.0, K_I=0.5, K_D=1.0, n=40)
+        
+        print("IMAGE AGENT INIT")
 
     def tick(self, input_data):
         result = super().tick(input_data)
@@ -79,6 +85,8 @@ class ImageAgent(BaseAgent):
         target = np.clip(target, 0, 256)
 
         result['target'] = target
+        
+        print("IMAGE AGENT TICK")
 
         return result
 
@@ -119,6 +127,9 @@ class ImageAgent(BaseAgent):
                     tick_data, target_cam.squeeze(), points.cpu().squeeze(),
                     steer, throttle, brake, desired_speed,
                     self.step)
+        
+        
+        print("IMAGE AGENT RUN LEARN STEP")
 
         return control
 
@@ -128,7 +139,7 @@ class ImageAgent(BaseAgent):
             self._init()
 
         tick_data = self.tick(input_data)
-
+        
         img = torchvision.transforms.functional.to_tensor(tick_data['image'])
         img = img[None].cuda()
 
@@ -169,6 +180,8 @@ class ImageAgent(BaseAgent):
                     tick_data, target_cam.squeeze(), points.cpu().squeeze(),
                     steer, throttle, brake, desired_speed,
                     self.step)
+         
+       	print("IMAGE AGENT RUN STEP")
 
         return control
 

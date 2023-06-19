@@ -7,14 +7,17 @@ import numpy as np
 import cv2
 import carla
 
+import timeit
+
 from PIL import Image, ImageDraw
 
 from carla_project.src.common import CONVERTER, COLOR
 from team_code.map_agent import MapAgent
 from team_code.pid_controller import PIDController
 
+import team_code.synthetic as synth
 
-HAS_DISPLAY = True
+HAS_DISPLAY = False
 DEBUG = False
 WEATHERS = [
         carla.WeatherParameters.ClearNoon,
@@ -74,6 +77,29 @@ def get_collision(p1, v1, p2, v2):
     return collides, p1 + x[0] * v1
 
 
+FOV = 90
+w = 256
+F = w / (2 * np.tan(FOV * np.pi / 360))
+
+cam_info ={
+    'F': F,
+    'map_size' : 256,
+    'pixels_per_world' : 5.5,
+    'w' : 256,
+    'h' : 144,
+    'fy' : F,
+    'fx' : 1.0 * F,
+    'hack' : 0.4,
+    'cam_height' : 1.3,
+}
+
+K = np.array([
+[cam_info['fx'], 0, cam_info['w']/2],
+[0, cam_info['fy'], cam_info['h']/2],
+[0, 0, 1]])
+
+
+
 class AutoPilot(MapAgent):
     def setup(self, path_to_conf_file):
         super().setup(path_to_conf_file)
@@ -95,12 +121,22 @@ class AutoPilot(MapAgent):
             (self.save_path / 'rgb_right').mkdir()
             (self.save_path / 'topdown').mkdir()
             (self.save_path / 'measurements').mkdir()
+            (self.save_path / 'object_data').mkdir()
+            
+            (self.save_path / 'actordists').mkdir()
+            (self.save_path / 'rgbgaze').mkdir()
+            (self.save_path / 'rgbleftgaze').mkdir()
+            (self.save_path / 'rgbrightgaze').mkdir()
+            
+            print("AUTOPILOT SETUP")
 
     def _init(self):
         super()._init()
 
         self._turn_controller = PIDController(K_P=1.25, K_I=0.75, K_D=0.3, n=40)
         self._speed_controller = PIDController(K_P=5.0, K_I=0.5, K_D=1.0, n=40)
+        
+        print("AUTOPILOT INIT")
 
     def _get_angle_to(self, pos, theta, target):
         R = np.array([
@@ -197,8 +233,10 @@ class AutoPilot(MapAgent):
             self.save(far_node, near_command, steer, throttle, brake, target_speed, data)
 
         return control
-
+        
+        
     def save(self, far_node, near_command, steer, throttle, brake, target_speed, tick_data):
+        TIME_BEGIN = timeit.default_timer()
         frame = self.step // 10
 
         pos = self._get_position(tick_data)
@@ -220,14 +258,14 @@ class AutoPilot(MapAgent):
                 }
 
         (self.save_path / 'measurements' / ('%04d.json' % frame)).write_text(str(data))
-
-        Image.fromarray(tick_data['rgb']).save(self.save_path / 'rgb' / ('%04d.png' % frame))
-        Image.fromarray(tick_data['rgb_left']).save(self.save_path / 'rgb_left' / ('%04d.png' % frame))
-        Image.fromarray(tick_data['rgb_right']).save(self.save_path / 'rgb_right' / ('%04d.png' % frame))
-        Image.fromarray(tick_data['topdown']).save(self.save_path / 'topdown' / ('%04d.png' % frame))
-
+        
+        print("TOTAL TIME TO PREPARE FOR DATA COLLECTION :", timeit.default_timer() - TIME_BEGIN)
+        
+        synth.collectData(self.step, self._world, self._vehicle, self.save_path, tick_data)
+            
     def _should_brake(self):
         actors = self._world.get_actors()
+        
 
         vehicle = self._is_vehicle_hazard(actors.filter('*vehicle*'))
         light = self._is_light_red(actors.filter('*traffic_light*'))
@@ -250,6 +288,7 @@ class AutoPilot(MapAgent):
             affecting = self._vehicle.get_traffic_light()
 
             for light in self._traffic_lights:
+                # print("TRAFFIC LIGHT ", light, light.id)
                 if light.id == affecting.id:
                     return affecting
 

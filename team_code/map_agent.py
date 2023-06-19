@@ -38,8 +38,11 @@ class MapAgent(BaseAgent):
         self._waypoint_planner.set_route(self._plan_gps_HACK, True)
 
         self._traffic_lights = list()
+        
+        print("MAP AGENT INIT")
 
     def tick(self, input_data):
+        # print("MAP AGENT TICK")
         self._actors = self._world.get_actors()
         self._traffic_lights = get_nearby_lights(self._vehicle, self._actors.filter('*traffic_light*'))
 
@@ -48,5 +51,9 @@ class MapAgent(BaseAgent):
 
         result = super().tick(input_data)
         result['topdown'] = topdown
+        
+        
+        # print("VEHICLE LOCATION", self._vehicle.get_location())
+        
 
         return result

@@ -14,12 +14,16 @@ class BaseAgent(autonomous_agent.AutonomousAgent):
         self.step = -1
         self.wall_start = time.time()
         self.initialized = False
+        
+        print("BASE AGENT SETUP")
 
     def _init(self):
         self._command_planner = RoutePlanner(7.5, 25.0, 257)
         self._command_planner.set_route(self._global_plan, True)
 
         self.initialized = True
+        
+        print("BASE AGENT INIT")
 
     def _get_position(self, tick_data):
         gps = tick_data['gps']
@@ -80,6 +84,8 @@ class BaseAgent(autonomous_agent.AutonomousAgent):
         gps = input_data['gps'][1][:2]
         speed = input_data['speed'][1]['speed']
         compass = input_data['imu'][1][-1]
+        
+        # print("BASE AGENT TICK")
 
         return {
                 'rgb': rgb,
@@ -89,3 +95,6 @@ class BaseAgent(autonomous_agent.AutonomousAgent):
                 'speed': speed,
                 'compass': compass
                 }
+        
+        
+        
