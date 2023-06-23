@@ -238,7 +238,7 @@ def collectData(step, world, vehicle, save_path, tick_data):
                 
             # print("ACTOR!", actor.type_id, actor.id)
             # print(key, str(actor.id), " = ", avgdist)
-            data[key + str(actor.id)] = float(avgdist)
+            data[key + str(actor.id)] = (float(avgdist), float(angle0))
             
         if (DEBUG):
             print("VEHICLES")
@@ -283,7 +283,7 @@ def collectData(step, world, vehicle, save_path, tick_data):
         rs = tracker.return_state()   
         gada.solve(frame, data, str(save_path) + "/actordists", rs, actors, cams)
     
-    print(data)
+    # print(data)
     
     
     print("TOTAL TIME FOR DATA COLLECTION :", timeit.default_timer() - TIME_BEGIN)

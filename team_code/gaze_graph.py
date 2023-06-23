@@ -26,25 +26,38 @@ class GazeTracker():
         self.min_distances = { # TODO: fill in these values with reasonable numbers
             "lead_vehicle": 30.0,
             "walker": 20.0,
-            "traffic_light": 40.0,
+            "traffic_light": 20.0,
             "stop_sign": 10.0,
             "oncoming_vehicle": 10.0
+        }
+        default_center = 0.23
+        self.angle_range = {
+            "lead_vehicle": [-default_center,default_center],
+            "walker": [-1.5,1.5],
+            "traffic_light": [-default_center,default_center],
+            "stop_sign": [0.0,0.5],
+            "oncoming_vehicle": [-default_center,default_center],
         }
 
     def get_class_name(self, obj_name): # turns an instance into a class
         return obj_name.strip("0123456789")
 
-    def check_in(self, obj_name, dist):
+    def check_in(self, obj_name, distang):
         '''
         generates an existance vector
         '''
+        dist, angle = distang
         class_name = self.get_class_name(obj_name)
-        return class_name, obj_name, dist < self.min_distances[class_name], dist
+        return (class_name, 
+                obj_name, 
+                ((dist < self.min_distances[class_name]) 
+                and (self.angle_range[class_name][0] < angle < self.angle_range[class_name][1]))
+                , dist)
 
 
     def update_graph(self, observed_values, action_waypoints):
         '''
-        @param objects: a python dict with the name of the object mapped to the distance away
+        @param objects: a python dict with the name of the object mapped to the tuple of distance away and gaze angle
         @param action_waypoints: the set of waypoints the agent is taking, TODO: implement this
         '''
         existance_vector = [self.check_in(*obj_dist) for obj_dist in observed_values.items()]
@@ -65,7 +78,7 @@ class GazeTracker():
                     existance_dict[ev[0]] = (ev[1], ev[3])
         existance_order = list(existance_dict.values())
         existance_order.sort(key = lambda x: x[-1])
-        # print("eo", existance_order, existance_dict)
+        print("eo", existance_order, existance_dict)
 
         existance_vector = {cn: (cn in existance_dict) for cn in self.class_order}
         existance_vector["vanishing_point"] = True # vanishing point has no corresponding object
@@ -125,8 +138,10 @@ class GazeTracker():
         new_current_state = existance_dict[self.get_class_name(np.random.choice(names, p=ps))][0] # the name of the object
         self.stay_probability -= self.decay
         if new_current_state != self.current_state:
-            self.stay_probability = self.initial_fixate_probability
+            vanishing_penalty = 0.2 if new_current_state == "vanishing_point" else 0# reduces likelihood of staying on vanishing point
+            self.stay_probability = self.initial_fixate_probability - vanishing_penalty
         self.current_state = new_current_state
+        print(self.current_state, self.stay_probability)
     
     def return_state(self):
         return self.current_state

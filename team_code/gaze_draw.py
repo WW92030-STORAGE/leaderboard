@@ -36,13 +36,16 @@ def inBounds(x, y):
     
     return True
     
-def draw_gaze(path, px, py, sp):
+def draw_gaze(path, px, py, sp, show=False):
     im = Image.open(path).convert("RGBA")
     img = ImageDraw.Draw(im)
     shape = (px - radius, py - radius, px + radius, py + radius)
     if (inBounds(px, py)):
         img.ellipse(shape, fill ="#FFFFFF", outline ="red")
     im.save(sp)
+    if show:
+        cv2.imshow("gaze_im", np.array(im))
+        cv2.waitKey(1)
     
     
 def solve(frame, datapoint, gaze_path, state, actors, cams):
@@ -90,6 +93,6 @@ def solve(frame, datapoint, gaze_path, state, actors, cams):
         if (DEBUG):
             print("VANISHING POINT!!!!")
     
-    draw_gaze(pathtodata + "/rgb/" + fourdigits(frame) + ".png", pixloc[0], pixloc[1], pathtodata + "/rgbgaze/" + fourdigits(frame) + ".png")
+    draw_gaze(pathtodata + "/rgb/" + fourdigits(frame) + ".png", pixloc[0], pixloc[1], pathtodata + "/rgbgaze/" + fourdigits(frame) + ".png", show=True)
     draw_gaze(pathtodata + "/rgb_left/" + fourdigits(frame) + ".png", pixloc1[0], pixloc1[1], pathtodata + "/rgbleftgaze/" + fourdigits(frame) + ".png")
     draw_gaze(pathtodata + "/rgb_right/" + fourdigits(frame) + ".png", pixloc2[0], pixloc2[1], pathtodata + "/rgbrightgaze/" + fourdigits(frame) + ".png")
