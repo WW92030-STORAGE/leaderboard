@@ -12,6 +12,8 @@ from PIL import Image, ImageDraw
 
 import synthetic as synth
 
+import attentionMapCreator as mapc # REPLACE WITH THE CORRECT PATH
+
 DEBUG = False
 
 radius = 3
@@ -37,13 +39,22 @@ def inBounds(x, y):
     return True
     
 def draw_gaze(path, px, py, sp):
+    '''
     im = Image.open(path).convert("RGBA")
     img = ImageDraw.Draw(im)
     shape = (px - radius, py - radius, px + radius, py + radius)
     if (inBounds(px, py)):
         img.ellipse(shape, fill ="#FFFFFF", outline ="red")
-    im.save(sp)
     
+    im.save(sp)
+    '''
+    
+    im = mapc.draw_attention_map([[int(px), int(py)]], Image.open(path))
+    
+    im[0].save(sp)
+
+def tup(x):
+    return int(x[0]), int(x[1])
     
 def solve(frame, datapoint, gaze_path, state, actors, cams):
     pathtodata = gaze_path[:gaze_path.index("/actordists")]
@@ -93,3 +104,32 @@ def solve(frame, datapoint, gaze_path, state, actors, cams):
     draw_gaze(pathtodata + "/rgb/" + fourdigits(frame) + ".png", pixloc[0], pixloc[1], pathtodata + "/rgbgaze/" + fourdigits(frame) + ".png")
     draw_gaze(pathtodata + "/rgb_left/" + fourdigits(frame) + ".png", pixloc1[0], pixloc1[1], pathtodata + "/rgbleftgaze/" + fourdigits(frame) + ".png")
     draw_gaze(pathtodata + "/rgb_right/" + fourdigits(frame) + ".png", pixloc2[0], pixloc2[1], pathtodata + "/rgbrightgaze/" + fourdigits(frame) + ".png")
+    
+    # NumPy things
+    
+    """
+    
+    binarray = np.zeros((144, 256))
+    binarray1 = np.zeros((144, 256))
+    binarray2 = np.zeros((144, 256))
+    if (inBounds(pixloc[0], pixloc[1])):
+        binarray[int(pixloc[1])][int(pixloc[0])] = 1
+    if (inBounds(pixloc1[0], pixloc1[1])):
+        binarray1[int(pixloc1[1])][int(pixloc1[0])] = 1
+    if (inBounds(pixloc2[0], pixloc2[1])):
+        binarray2[int(pixloc2[1])][int(pixloc2[0])] = 1
+        
+    """
+    
+    binarray = mapc.get_attention_map([tup(pixloc)], (144, 256))
+    binarray1 = mapc.get_attention_map([tup(pixloc1)], (144, 256))
+    binarray2 = mapc.get_attention_map([tup(pixloc2)], (144, 256))
+    
+    np.save(pathtodata + "/matrix/" + fourdigits(frame) + ".npy", binarray)
+    np.save(pathtodata + "/matrixleft/" + fourdigits(frame) + ".npy", binarray1)
+    np.save(pathtodata + "/matrixright/" + fourdigits(frame) + ".npy", binarray2)
+    
+    
+    
+    
+    
