@@ -128,6 +128,10 @@ class AutoPilot(MapAgent):
             (self.save_path / 'rgbleftgaze').mkdir()
             (self.save_path / 'rgbrightgaze').mkdir()
             
+            (self.save_path / 'matrix').mkdir()
+            (self.save_path / 'matrixleft').mkdir()
+            (self.save_path / 'matrixright').mkdir()
+            
             print("AUTOPILOT SETUP")
 
     def _init(self):
