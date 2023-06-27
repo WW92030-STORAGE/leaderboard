@@ -88,7 +88,7 @@ def obtainPixel(actor, cam): # both are transforms
     disp = (actor.location).__sub__(cam.location)
     angle = np.arccos(xy_cos(disp, cam.get_forward_vector()))
     
-    # print("RELATIVE POS", cam.get_forward_vector(), disp, angle)
+    print("RELATIVE POS", cam.get_forward_vector(), disp, angle)
         
     width = 256
     height = 144
@@ -111,6 +111,9 @@ def obtainPixel(actor, cam): # both are transforms
     
     res[0] = (width - width * norm(relativex) / norm(direct) * sgn(relativex.x)) * 0.5
     res[1] = (height - height * norm(relativey) / norm(direct) * sgn(relativey.y)) * 0.5
+    
+    if ((disp.z < 0) == (res[1] < height * 0.5)):
+        res[1] = height - res[1]
         
     return res
 
@@ -238,7 +241,7 @@ def collectData(step, world, vehicle, save_path, tick_data):
                 
             # print("ACTOR!", actor.type_id, actor.id)
             # print(key, str(actor.id), " = ", avgdist)
-            data[key + str(actor.id)] = float(avgdist)
+            data[key + str(actor.id)] = (float(avgdist), float(angle0))
             
         if (DEBUG):
             print("VEHICLES")
@@ -283,7 +286,7 @@ def collectData(step, world, vehicle, save_path, tick_data):
         rs = tracker.return_state()   
         gada.solve(frame, data, str(save_path) + "/actordists", rs, actors, cams)
     
-    print(data)
+    # print(data)
     
     
     print("TOTAL TIME FOR DATA COLLECTION :", timeit.default_timer() - TIME_BEGIN)
