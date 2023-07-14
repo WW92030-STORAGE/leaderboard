@@ -105,6 +105,19 @@ def solve(frame, datapoint, gaze_path, state, actors, cams):
     draw_gaze(pathtodata + "/rgb_left/" + fourdigits(frame) + ".png", pixloc1[0], pixloc1[1], pathtodata + "/rgbleftgaze/" + fourdigits(frame) + ".png")
     draw_gaze(pathtodata + "/rgb_right/" + fourdigits(frame) + ".png", pixloc2[0], pixloc2[1], pathtodata + "/rgbrightgaze/" + fourdigits(frame) + ".png")
     
+    place = str(pathtodata) + "/points.txt"
+            
+    if (frame == 0):
+        savefile = open(place, "x")
+    else:
+        savefile = open(place, "a")
+    
+    savefile.write(str(frame) + " = " + str(pixloc1[0]) + " " + str(pixloc1[1]) + " / " + str(pixloc[0]) + " " + str(pixloc[1]) + " / " + str(pixloc2[0]) + " " + str(pixloc2[1]))
+    savefile.write("\n")
+    
+    savefile.close()
+    
+    
     # NumPy things
     
     """
